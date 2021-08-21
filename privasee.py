@@ -42,6 +42,7 @@ def playContent(uri):
     # videoplayer = subprocess.Popen(["mpv", request.get("result").get("streaming_url")], stdout=None, stderr=None)
     print("Your video was downloaded to " + str(request.get("result").get("download_path")))
 
+# Search content using LBRYNet and make the user choose one to download
 def searchContent(searchterm):
     request = requests.post("http://localhost:5279", json={"method": "claim_search", "params": {"text": searchterm}}).json()
     results = request.get("result").get("items")
@@ -54,7 +55,9 @@ def searchContent(searchterm):
         except:
             print(f'{i}: {result.get("value").get("title")}')
     def choose():
-        choice = input("Input the number of the video you want to watch: ")
+        choice = input("Input the number of the video you want to watch (-1 to search again): ")
+        if choice == "-1":
+            return
         try:
             playContent(resulturis[int(choice)])
             return
@@ -65,4 +68,3 @@ def searchContent(searchterm):
 
 while True:
     searchContent(input("Search: "))
-    # playContent(input("LBRY URI to play: \n"))
