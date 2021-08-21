@@ -32,7 +32,7 @@ except:
     StartLBRYNet()
 
 
-# Uses LBRYNet to get 
+# Uses LBRYNet to get content
 def playContent(uri):
     request = requests.post("http://localhost:5279", json={"method": "get", "params": {"uri": uri}}).json()
     if request.get("result").get("streaming_url") == None:
@@ -42,5 +42,27 @@ def playContent(uri):
     # videoplayer = subprocess.Popen(["mpv", request.get("result").get("streaming_url")], stdout=None, stderr=None)
     print("Your video was downloaded to " + str(request.get("result").get("download_path")))
 
+def searchContent(searchterm):
+    request = requests.post("http://localhost:5279", json={"method": "claim_search", "params": {"text": searchterm}}).json()
+    results = request.get("result").get("items")
+    resulturis = []
+    for i in range(len(results)):
+        result = results[i]
+        resulturis.append(result.get("canonical_url"))
+        try:
+            print(f'{i}: {result.get("value").get("title")} - {result.get("signing_channel").get("value").get("title")}')
+        except:
+            print(f'{i}: {result.get("value").get("title")}')
+    def choose():
+        choice = input("Input the number of the video you want to watch: ")
+        try:
+            playContent(resulturis[int(choice)])
+            return
+        except:
+            print("Not found in list")
+            choose()
+    choose()
+
 while True:
-    playContent(input("LBRY URI to play: \n"))
+    searchContent(input("Search: "))
+    # playContent(input("LBRY URI to play: \n"))
