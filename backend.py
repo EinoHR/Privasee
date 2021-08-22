@@ -5,16 +5,20 @@ import os
 import stat
 
 # Checks if LBRYNET is installed
-# If not, it calls InstalLBRYNet, if it is it starts it
-def StartLBRYNet():
+# If not, it calls install_lbrynet, if it is it starts it
+def start_lbrynet():
     try:
-        with open("lbrynet.log", "a") as log:
+        with open("lbrynet.log", "w") as log:
+            print("Starting LBRYNet...")
+            log.seek(0)
+            log.truncate()
             lbrynet = subprocess.Popen(["lbrynet", "start"], stdout=log, stderr=log)
     except:
-        InstalLBRYNet()
+        print("LBRYNet not found. Installing...")
+        install_lbrynet()
 
 # Installs latest build of LBRYNET and moves it to the appropriete directory.
-def InstalLBRYNet():
+def install_lbrynet():
     lbrynetdl = requests.get("https://github.com/lbryio/lbry-sdk/releases/latest/download/lbrynet-mac.zip")
     open("lbrynet.zip","wb").write(lbrynetdl.content)
     zip = zipfile.ZipFile("lbrynet.zip")
@@ -22,18 +26,21 @@ def InstalLBRYNet():
     os.remove("lbrynet.zip")
     execstat = os.stat("/usr/local/bin/lbrynet")
     os.chmod("/usr/local/bin/lbrynet", execstat.st_mode | stat.S_IEXEC)
-    StartLBRYNet()
+    start_lbrynet()
 
+def is_running():
+    request = requests.post("http://localhost:5279", json={"method": "status", "params": {}}).json()
+    return request.get("result").get("is_running")
 
 # Start lbrynet if not running
 try:
     requests.post("http://localhost:5279")
 except:
-    StartLBRYNet()
+    start_lbrynet()
 
 
 # Uses LBRYNet to get content
-def playContent(uri):
+def play_content(uri):
     request = requests.post("http://localhost:5279", json={"method": "get", "params": {"uri": uri}}).json()
     if request.get("result").get("streaming_url") == None:
         print("Oops, not a valid URI.\n")
@@ -43,7 +50,7 @@ def playContent(uri):
     print("Your video was downloaded to " + str(request.get("result").get("download_path")))
 
 # Search content using LBRYNet and make the user choose one to download
-def searchContent(searchterm):
+def search_content(searchterm):
     request = requests.post("http://localhost:5279", json={"method": "claim_search", "params": {"text": searchterm}}).json()
     results = request.get("result").get("items")
     resulturis = []
@@ -59,12 +66,12 @@ def searchContent(searchterm):
         if choice == "-1":
             return
         try:
-            playContent(resulturis[int(choice)])
+            play_content(resulturis[int(choice)])
             return
         except:
             print("Not found in list")
             choose()
     choose()
 
-while True:
-    searchContent(input("Search: "))
+# while True:
+#     pass
